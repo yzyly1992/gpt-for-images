@@ -7,12 +7,11 @@ import warnings
 from PIL import Image
 from stability_sdk import client
 import stability_sdk.interfaces.gooseai.generation.generation_pb2 as generation
-
-os.environ['STABILITY_HOST'] = 'grpc.stability.ai:443'
-os.environ['STABILITY_KEY'] = 'key-goes-here'
+from dotenv import load_dotenv
+load_dotenv()
 
 stability_api = client.StabilityInference(
-    key=os.environ['STABILITY_KEY'], # API Key reference.
+    key=os.getenv("STABILITY_API_KEY"), # Your Stability API key.
     upscale_engine="esrgan-v1-x2plus", # The name of the upscaling model we want to use.
                                        # Available Upscaling Engines: esrgan-v1-x2plus
     verbose=True, # Print debug messages.
