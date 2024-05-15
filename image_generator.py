@@ -6,6 +6,7 @@ import pprint
 import dotenv
 import os
 dotenv.load_dotenv()
+import argparse
 
 url = "http://cl.imagineapi.dev/items/images/"
 headers = {
@@ -21,8 +22,6 @@ def send_request(method, path, body=None, headers={}):
     conn.close()
     return data
  
-# prompt_response_data = send_request('POST', '/items/images/', data, headers)
-# pprint.pp(prompt_response_data)
 def prompt_to_image(prompt: str):
     data = {
         "prompt": prompt
@@ -52,6 +51,17 @@ def images_to_image(urls: list, prompt: str = ""):
         print(f"Error: {prompt_response_data['error']}")
         return None
     return prompt_response_data.get('data').get('id')
+
+def all_to_image(prompt: str, urls: list):
+    prompt_content = " ".join(urls) + " " + prompt
+    data = {
+        "prompt": prompt_content.strip()
+    }
+    prompt_response_data = send_request('POST', '/items/images/', data, headers)
+    if 'error' in prompt_response_data:
+        print(f"Error: {prompt_response_data['error']}")
+        return None
+    return prompt_response_data.get('data').get('id')
  
 def check_image_status(id: str):
     response_data = send_request('GET', f"/items/images/{id}", headers=headers)
@@ -71,20 +81,28 @@ def loop_check_status(id: str):
 def get_image(id: str):
     response_data = send_request('GET', f"/items/images/{id}", headers=headers)
     if response_data['data']['status'] == 'completed':
-        return response_data['data']['url']
+        return response_data['data']
     else:
         return None
 
-def main():
-    prompt = "A beautiful sunset over the ocean --ar 13:30 --chaos 40 --stylize 500"
-    # id = prompt_to_image(prompt)
-    id = images_to_image(['https://cl.imagineapi.dev/assets/ea5b99ef-600d-4ce6-9aeb-056f4e2fcbd4/ea5b99ef-600d-4ce6-9aeb-056f4e2fcbd4.png',
-                   'https://cl.imagineapi.dev/assets/2e3c28f0-5e3c-44d8-9fbc-47e634bf2fd6/2e3c28f0-5e3c-44d8-9fbc-47e634bf2fd6.png'], prompt)
-    loop_check_status(id)
-    print(get_image(id))
+# def main():
+#     prompt = "A beautiful sunset over the ocean --ar 13:30 --chaos 40 --stylize 500"
+#     # id = prompt_to_image(prompt)
+#     id = images_to_image(['https://cl.imagineapi.dev/assets/ea5b99ef-600d-4ce6-9aeb-056f4e2fcbd4/ea5b99ef-600d-4ce6-9aeb-056f4e2fcbd4.png',
+#                    'https://cl.imagineapi.dev/assets/2e3c28f0-5e3c-44d8-9fbc-47e634bf2fd6/2e3c28f0-5e3c-44d8-9fbc-47e634bf2fd6.png'], prompt)
+#     loop_check_status(id)
+#     print(get_image(id))
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description='Generate image from prompt')
+    parser.add_argument('--prompt', type=str, help='Prompt to generate image')
+    parser.add_argument('--urls', nargs='+', help='List of urls to generate image')
+    args = parser.parse_args()
+    prompt = args.prompt
+    urls = args.urls
+    id = all_to_image(prompt | "", urls | [])
+    loop_check_status(id)
+    get_image(id)
 
 # prompt to image result
 # Image is not finished generation. Status: in-progress
