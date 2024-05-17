@@ -1,84 +1,156 @@
-# image_generator.py
-import os
-import http.client
+# https://docs.imagineapi.dev/quick-start/python
 import json
-import requests
-from PIL import Image
-import io
 import time
+import http.client
 import pprint
+import dotenv
+import os
+dotenv.load_dotenv()
+import argparse
 
-# Load environment variables
-from dotenv import load_dotenv
-load_dotenv()
-IMAGINE_API_URL = os.environ.get('IMAGINE_API_URL')
-IMAGINE_API_TOKEN = os.environ.get('IMAGINE_API_TOKEN')
+url = "http://cl.imagineapi.dev/items/images/"
+headers = {
+    'Authorization': f'Bearer {os.getenv("IMAGINEAPI_KEY")}',
+    'Content-Type': 'application/json'
+}
 
 def send_request(method, path, body=None, headers={}):
-    conn = http.client.HTTPSConnection(IMAGINE_API_URL.replace("http://", ""))
+    conn = http.client.HTTPSConnection("cl.imagineapi.dev")
     conn.request(method, path, body=json.dumps(body) if body else None, headers=headers)
     response = conn.getresponse()
     data = json.loads(response.read().decode())
     conn.close()
     return data
+ 
+def prompt_to_image(prompt: str):
+    data = {
+        "prompt": prompt
+    }
+    prompt_response_data = send_request('POST', '/items/images/', data, headers)
+    if 'error' in prompt_response_data:
+        print(f"Error: {prompt_response_data['error']}")
+        return None
+    return prompt_response_data.get('data').get('id')
 
-def fetch_image(image_url):
-    response = requests.get(image_url, stream=True)
-    if response.status_code == 200:
-        image_data = response.content
-        image = Image.open(io.BytesIO(image_data))
-        return image
+def image_to_image(url: str, prompt: str = ""):
+    data = {
+        "prompt": url + " " + prompt
+    }
+    prompt_response_data = send_request('POST', '/items/images/', data, headers)
+    if 'error' in prompt_response_data:
+        print(f"Error: {prompt_response_data['error']}")
+        return None
+    return prompt_response_data.get('data').get('id')
+
+def images_to_image(urls: list, prompt: str = ""):
+    data = {
+        "prompt": " ".join(urls) + " " + prompt
+    }
+    prompt_response_data = send_request('POST', '/items/images/', data, headers)
+    if 'error' in prompt_response_data:
+        print(f"Error: {prompt_response_data['error']}")
+        return None
+    return prompt_response_data.get('data').get('id')
+
+def all_to_image(prompt: str, urls: list):
+    prompt_content = " ".join(urls) + " " + prompt
+    data = {
+        "prompt": prompt_content.strip()
+    }
+    prompt_response_data = send_request('POST', '/items/images/', data, headers)
+    if 'error' in prompt_response_data:
+        print(f"Error: {prompt_response_data['error']}")
+        return None
+    return prompt_response_data.get('data').get('id')
+ 
+def check_image_status(id: str):
+    response_data = send_request('GET', f"/items/images/{id}", headers=headers)
+    if response_data['data']['status'] in ['completed', 'failed']:
+        print('Completed image details',)
+        pprint.pp(response_data['data'])
+        return True
     else:
-        return f"Error: {response.status_code} - {response.text}"
+        print(f"Image is not finished generation. Status: {response_data['data']['status']}")
+        return False
 
-def check_image_status(image_id):
-    path = f"/items/images/{image_id}"
-    headers = {
-        'Authorization': f'Bearer {IMAGINE_API_TOKEN}',
-        'Content-Type': 'application/json'
-    }
-    while True:
-        response_data = send_request('GET', path, headers=headers)
-        if response_data['data']['status'] in ['completed', 'failed']:
-            pprint.pp(response_data['data'])
-            if response_data['data']['status'] == 'completed':
-                image_url = response_data['data']['url']
-                if image_url:
-                    return fetch_image(image_url)
-                else:
-                    return "Error: Image URL not found in response."
-            else:
-                return "Error: Image generation failed."
-        else:
-            print(f"Image is not finished generating. Status: {response_data['data']['status']}")
-            time.sleep(5)  # wait for 5 seconds before checking again
-def generate_image_from_text(text):
-    data = {
-        "prompt": text
-    }
-    headers = {
-        'Authorization': f'Bearer {IMAGINE_API_TOKEN}',
-        'Content-Type': 'application/json'
-    }
-    prompt_response_data = send_request('POST', '/items/images/', body=data, headers=headers)
-    pprint.pp(prompt_response_data)
-    image_id = prompt_response_data['data']['id']
-    return check_image_status(image_id)
+def loop_check_status(id: str):
+    while not check_image_status(id):
+        time.sleep(5)  # wait for 5 seconds
+    return True
 
-def generate_image_from_image(input_image):
-    image_url = image_to_url(input_image)
-    data = {
-        "prompt": image_url
-    }
-    headers = {
-        'Authorization': f'Bearer {IMAGINE_API_TOKEN}',
-        'Content-Type': 'application/json'
-    }
-    prompt_response_data = send_request('POST', '/items/images/', body=data, headers=headers)
-    pprint.pp(prompt_response_data)
-    image_id = prompt_response_data['data']['id']
-    return check_image_status(image_id)
+def get_image(id: str):
+    response_data = send_request('GET', f"/items/images/{id}", headers=headers)
+    if response_data['data']['status'] == 'completed':
+        return response_data['data']
+    else:
+        return None
 
-def generate_image_from_video(video):
-    
-    return check_image_status(image_id)
+# def main():
+#     prompt = "A beautiful sunset over the ocean --ar 13:30 --chaos 40 --stylize 500"
+#     # id = prompt_to_image(prompt)
+#     id = images_to_image(['https://cl.imagineapi.dev/assets/ea5b99ef-600d-4ce6-9aeb-056f4e2fcbd4/ea5b99ef-600d-4ce6-9aeb-056f4e2fcbd4.png',
+#                    'https://cl.imagineapi.dev/assets/2e3c28f0-5e3c-44d8-9fbc-47e634bf2fd6/2e3c28f0-5e3c-44d8-9fbc-47e634bf2fd6.png'], prompt)
+#     loop_check_status(id)
+#     print(get_image(id))
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Generate image from prompt')
+    parser.add_argument('--prompt', type=str, help='Prompt to generate image')
+    parser.add_argument('--urls', nargs='+', help='List of urls to generate image')
+    args = parser.parse_args()
+    prompt = args.prompt
+    urls = args.urls
+    id = all_to_image(prompt | "", urls | [])
+    loop_check_status(id)
+    get_image(id)
+
+# prompt to image result
+# Image is not finished generation. Status: in-progress
+# Image is not finished generation. Status: in-progress
+# Image is not finished generation. Status: in-progress
+# Completed image details
+# {'id': '29d35f68-d55f-47dc-b3fe-cb0cb3ea0b0c',
+#  'prompt': 'A beautiful sunset over the ocean --ar 13:30 --chaos 40 --stylize '
+#            '1000',
+#  'results': 'fc306264-9da9-4c9c-adcf-40efea90cb29',
+#  'user_created': 'bff27409-151b-45d5-a97d-f20448df33fb',
+#  'date_created': '2024-05-15T15:33:38.319Z',
+#  'status': 'completed',
+#  'progress': None,
+#  'url': 'https://cl.imagineapi.dev/assets/fc306264-9da9-4c9c-adcf-40efea90cb29/fc306264-9da9-4c9c-adcf-40efea90cb29.png',
+#  'error': None,
+#  'upscaled_urls': ['https://cl.imagineapi.dev/assets/5133f1fe-2bbc-4868-b000-fae07a3e8c0e/5133f1fe-2bbc-4868-b000-fae07a3e8c0e.png',
+#                    'https://cl.imagineapi.dev/assets/ea5b99ef-600d-4ce6-9aeb-056f4e2fcbd4/ea5b99ef-600d-4ce6-9aeb-056f4e2fcbd4.png',
+#                    'https://cl.imagineapi.dev/assets/2e3c28f0-5e3c-44d8-9fbc-47e634bf2fd6/2e3c28f0-5e3c-44d8-9fbc-47e634bf2fd6.png',
+#                    'https://cl.imagineapi.dev/assets/56c224db-8fdb-4baa-baf4-4184409ce08e/56c224db-8fdb-4baa-baf4-4184409ce08e.png'],
+#  'ref': None,
+#  'upscaled': ['2e3c28f0-5e3c-44d8-9fbc-47e634bf2fd6',
+#               '5133f1fe-2bbc-4868-b000-fae07a3e8c0e',
+#               '56c224db-8fdb-4baa-baf4-4184409ce08e',
+#               'ea5b99ef-600d-4ce6-9aeb-056f4e2fcbd4']}
+
+# images to image result
+# Image is not finished generation. Status: in-progress
+# Image is not finished generation. Status: in-progress
+# Completed image details
+# {'id': 'c2c3df60-0dee-4602-bf37-605ff1573891',
+#  'prompt': 'https://cl.imagineapi.dev/assets/ea5b99ef-600d-4ce6-9aeb-056f4e2fcbd4/ea5b99ef-600d-4ce6-9aeb-056f4e2fcbd4.png '
+#            'https://cl.imagineapi.dev/assets/2e3c28f0-5e3c-44d8-9fbc-47e634bf2fd6/2e3c28f0-5e3c-44d8-9fbc-47e634bf2fd6.png '
+#            'A beautiful sunset over the ocean --ar 13:30 --chaos 40 --stylize '
+#            '500',
+#  'results': 'faba29bb-810e-4a08-af5c-b48936d34faa',
+#  'user_created': 'bff27409-151b-45d5-a97d-f20448df33fb',
+#  'date_created': '2024-05-15T15:48:11.573Z',
+#  'status': 'completed',
+#  'progress': None,
+#  'url': 'https://cl.imagineapi.dev/assets/faba29bb-810e-4a08-af5c-b48936d34faa/faba29bb-810e-4a08-af5c-b48936d34faa.png',
+#  'error': None,
+#  'upscaled_urls': ['https://cl.imagineapi.dev/assets/71f4b2d8-7d3b-4c83-9ccb-25b67c3ffc55/71f4b2d8-7d3b-4c83-9ccb-25b67c3ffc55.png',
+#                    'https://cl.imagineapi.dev/assets/185ad9c1-74c0-4789-bf9f-914eab39faee/185ad9c1-74c0-4789-bf9f-914eab39faee.png',
+#                    'https://cl.imagineapi.dev/assets/62205ff8-0ec1-4d95-b8d8-2a68a58b4151/62205ff8-0ec1-4d95-b8d8-2a68a58b4151.png',
+#                    'https://cl.imagineapi.dev/assets/489904a3-0820-4f3d-af7d-ab3d1016ca0e/489904a3-0820-4f3d-af7d-ab3d1016ca0e.png'],
+#  'ref': None,
+#  'upscaled': ['185ad9c1-74c0-4789-bf9f-914eab39faee',
+#               '489904a3-0820-4f3d-af7d-ab3d1016ca0e',
+#               '62205ff8-0ec1-4d95-b8d8-2a68a58b4151',
+#               '71f4b2d8-7d3b-4c83-9ccb-25b67c3ffc55']}
