@@ -16,6 +16,6 @@ Resolution:
 (65cm * 150cm) * 200dpi = 5118 * 11811 pixel
 (50cm * 60cm) * 200dpi = 3937 * 4724 pixel
 
-13:30 => (input) 674 * 1555 => (stability upscale) 1348 * 3110 => (pil upscale) 5118 * 11811
-5:6 => (input) 935 * 1121 => (stability upscale) 1870 * 2242 => (pil upscale) 3937 * 4724
+13:30 => (input/mid-journey) 720 * 1664 => 674 * 1555 => (stability upscale) 1348 * 3110 => (pil upscale) 5118 * 11811
+5:6 => (input/mid-journey) 992 * 1200 => 935 * 1121 => (stability upscale) 1870 * 2242 => (pil upscale) 3937 * 4724
 
