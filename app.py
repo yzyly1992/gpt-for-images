@@ -14,13 +14,13 @@ def generate_and_display(prompt=None, size_option=None, image_urls=[]):
     return image_gen_pipeline(prompt, image_urls, size_option)
     # return generate_images(prompt, size_option, image_urls)
 
-def upscale_and_download(url, size_option, progress=gr.Progress()):
-    progress(0, desc="Starting...")
-    progress(0.50, desc="Upscaling...")
+def upscale_and_download(url, size_option):
+    # progress(0, desc="Starting...")
+    # progress(0.50, desc="Upscaling...")
     upscaled_img = upscale_pipeline(url, size_option)
     upscaled_image_path = os.path.join("upscale", "upscaled_image_x2.png")
     upscaled_img.save(upscaled_image_path)
-    progress(0.100, desc="Complete")
+    # progress(0.100, desc="Complete")
     return upscaled_image_path
 
 def on_select(evt: gr.SelectData):
@@ -32,9 +32,9 @@ def process_and_generate(images, prompt, size_option):
     return generate_and_display(prompt, size_option, processed_image_urls)
 
 def process_video_and_generate(video, prompt, size_option):
-    video_name = os.path.splitext(os.path.basename(video.name))[0]
+    video_name = os.path.splitext(os.path.basename(video))[0]
     unique_output_path = get_unique_output_path(video_name)
-    frame_urls = process_video_frames(video.name, unique_output_path)
+    frame_urls = process_video_frames(video, unique_output_path)
     return generate_and_display(prompt, size_option, frame_urls)
 
 def text_to_image_tab():
