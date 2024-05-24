@@ -16,6 +16,9 @@ def generate_and_display(prompt=None, size_option=None, image_urls=[]):
 
 def upscale_and_download(url, size_option):
     upscaled_img = upscale_pipeline(url, size_option)
+    # check if the upscale folder exists
+    if not os.path.exists("upscale"):
+        os.makedirs("upscale")
     upscaled_image_path = os.path.join("upscale", "upscaled_ai_image.png")
     upscaled_img.save(upscaled_image_path)
     return upscaled_image_path
@@ -116,5 +119,5 @@ with gr.Blocks(css=css,title="AI Art Generator") as demo:
         with gr.TabItem("Video"):
             video_tab()
 
-demo.launch()
-# demo.launch(auth=("gpt.for.images@gmail.com", "@GPTArtGen24"))
+# demo.launch()
+demo.launch(auth=("gpt.for.images@gmail.com", "@GPTArtGen24"))
