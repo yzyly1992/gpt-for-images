@@ -116,4 +116,4 @@ with gr.Blocks(css=css,title="AI Art Generator") as demo:
         with gr.TabItem("Video"):
             video_tab()
 
-demo.launch()
+demo.launch(auth=("gpt.for.images@gmail.com", "@GPTArtGen24"))
