@@ -10,9 +10,12 @@ from image_generator import image_gen_pipeline
 
 def generate_and_display(prompt=None, size_option=None, image_urls=[]):
     print(prompt)
+    print(size_option)
     print(image_urls)
-    return image_gen_pipeline(prompt, image_urls, size_option)
-    # return generate_images(prompt, size_option, image_urls)
+    if not prompt and len(image_urls) == 0:
+            raise gr.Error("Please enter a prompt")
+    # return image_gen_pipeline(prompt, image_urls, size_option)
+    return generate_images(prompt, size_option, image_urls)
 
 def upscale_and_download(url, size_option):
     # progress(0, desc="Starting...")
@@ -28,19 +31,30 @@ def on_select(evt: gr.SelectData):
     return selected_url, gr.update(visible=True), gr.update(visible=True), gr.update(visible=True)
 
 def process_and_generate(images, prompt, size_option):
+    print(len(images))
+    if not images:
+            raise gr.Error("Please upload the image")
+    if len(images) == 1 and not prompt:
+        raise gr.Error("If only one image is uploaded, Please add a text prompt or another image")
+
     processed_image_urls = process_images(images)
     return generate_and_display(prompt, size_option, processed_image_urls)
 
 def process_video_and_generate(video, prompt, size_option):
+    if not video:
+        raise gr.Error("Please upload a video file.")
     video_name = os.path.splitext(os.path.basename(video))[0]
     unique_output_path = get_unique_output_path(video_name)
     frame_urls = process_video_frames(video, unique_output_path)
     return generate_and_display(prompt, size_option, frame_urls)
 
+def size_option_default():
+    return gr.Radio(choices=["65cm x 150cm", "50cm x 60cm"], label="Select Size", type="index", value="65cm x 150cm")  # `value=0` sets the first option as default
+
 def text_to_image_tab():
     with gr.Row():
         prompt = gr.Textbox(label="Enter your text prompt", placeholder="Type here...")
-        size_option = gr.Radio(choices=["65cm x 150cm", "50cm x 60cm"], label="Select Size Option", type="index")
+        size_option = size_option_default()
         generate_button = gr.Button("Generate Images")
 
     with gr.Row():
@@ -58,7 +72,7 @@ def image_to_image_tab():
     with gr.Row():
         input_images = gr.File(label="Upload your images", file_count="multiple")
         prompt = gr.Textbox(label="Enter your text prompt", placeholder="Type here...")
-        size_option = gr.Radio(choices=["65cm x 150cm", "50cm x 60cm"], label="Select Size Option", type="index")
+        size_option = size_option_default()
         process_button = gr.Button("Process Images")
 
     with gr.Row():
@@ -76,7 +90,7 @@ def video_tab():
     with gr.Row():
         video_input = gr.Video(label="Upload your video")
         prompt = gr.Textbox(label="Enter your text prompt", placeholder="Type here...")
-        size_option = gr.Radio(choices=["65cm x 150cm", "50cm x 60cm"], label="Select Size Option", type="index")
+        size_option = size_option_default()
         process_button = gr.Button("Process Video")
 
     with gr.Row():
