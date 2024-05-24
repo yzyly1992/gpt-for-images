@@ -1,6 +1,0 @@
-gradio
-moviepy
-pillow
-python-dotenv
-requests
-stability_sdk
