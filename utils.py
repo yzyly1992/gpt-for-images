@@ -3,6 +3,7 @@ import datetime
 from PIL import Image
 from image_to_url import image_to_url
 from video_to_image import video_to_image
+os.makedirs("images", exist_ok=True)
 
 def generate_images(prompt=None, size_option=None, image_urls=None, n_images=4):
     print('Generating images with size option:', size_option)
