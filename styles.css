@@ -1,0 +1,17 @@
+/* File: styles.css */
+h1 {
+    text-align: center;
+    color: #ffffff; /* white text color */
+    display:block;
+}
+
+.gradio-container {
+    background-color: #333333 !important; /* dark gray background color */
+}
+.gr-textbox, .gr-button, .gr-file, .gr-radio {
+    border: 1px solid #ffffff !important; /* solid white border */
+    color: #ffffff !important; /* white text color */
+}
+footer {
+    display: none !important;
+}

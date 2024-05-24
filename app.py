@@ -9,21 +9,15 @@ from image_upscale import upscale_pipeline
 from image_generator import image_gen_pipeline
 
 def generate_and_display(prompt=None, size_option=None, image_urls=[]):
-    print(prompt)
-    print(size_option)
-    print(image_urls)
     if not prompt and len(image_urls) == 0:
             raise gr.Error("Please enter a prompt")
-    # return image_gen_pipeline(prompt, image_urls, size_option)
-    return generate_images(prompt, size_option, image_urls)
+    return image_gen_pipeline(prompt, image_urls, size_option)
+    # return generate_images(prompt, size_option, image_urls)
 
 def upscale_and_download(url, size_option):
-    # progress(0, desc="Starting...")
-    # progress(0.50, desc="Upscaling...")
     upscaled_img = upscale_pipeline(url, size_option)
-    upscaled_image_path = os.path.join("upscale", "upscaled_image_x2.png")
+    upscaled_image_path = os.path.join("upscale", "upscaled_ai_image.png")
     upscaled_img.save(upscaled_image_path)
-    # progress(0.100, desc="Complete")
     return upscaled_image_path
 
 def on_select(evt: gr.SelectData):
@@ -31,9 +25,9 @@ def on_select(evt: gr.SelectData):
     return selected_url, gr.update(visible=True), gr.update(visible=True), gr.update(visible=True)
 
 def process_and_generate(images, prompt, size_option):
-    print(len(images))
+    
     if not images:
-            raise gr.Error("Please upload the image")
+            raise gr.Error("Please upload a image")
     if len(images) == 1 and not prompt:
         raise gr.Error("If only one image is uploaded, Please add a text prompt or another image")
 
@@ -104,31 +98,13 @@ def video_tab():
     processed_images.select(fn=on_select, inputs=None, outputs=[selected_image, upscale_button, download_file])
     upscale_button.click(fn=upscale_and_download, inputs=[selected_image, size_option], outputs=download_file)
 
-# Define CSS for custom title and background
-css = """
-body {
-    font-family: Arial, sans-serif;
-}
-h1 {
-    text-align: center;
-    color: black;
-}
-"""
 
-with gr.Blocks(css=css) as demo:
+with open("styles.css", "r") as file:
+    css = file.read()
+with gr.Blocks(css=css,title="AI Art Generator") as demo:
     gr.Markdown("""
-    <style>
-    body {
-        background: linear-gradient(to right, #1f4037, #99f2c8);
-        font-family: Arial, sans-serif;
-        color: white;
-    }
-    h1 {
-        text-align: center;
-        color: black;
-    }
-    </style>
-    <h1>AI Art Generator</h1>
+   
+    # AI Art Generator
     """)
     with gr.Tabs():
         with gr.TabItem("Text to Image"):
