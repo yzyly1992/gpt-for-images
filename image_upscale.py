@@ -42,25 +42,28 @@ def resize_to_target_size(image, target_size):
 def upscale_image(image_path, initial_size):
     print("Upscaling image using Stability AI ...")
     # check if image_path is url or local file
-    if image_path.startswith("http"):
-        img = Image.open(io.BytesIO(requests.get(image_path).content))
-    else:
-        img = Image.open(image_path)
-    img = img.resize(initial_size)
-    answers = stability_api.upscale(
-        init_image=img, # Pass our image to the API and call the upscaling process.
-        # width=1024, # Optional parameter to specify the desired output width.
-    )
-    for resp in answers:
-        for artifact in resp.artifacts:
-            if artifact.finish_reason == generation.FILTER:
-                warnings.warn(
-                    "Your request activated the API's safety filters and could not be processed."
-                    "Please submit a different image and try again.")
-            if artifact.type == generation.ARTIFACT_IMAGE:
-                big_img = Image.open(io.BytesIO(artifact.binary))
-                # big_img.save("samples/upscaled_image_x1.png")
-                return big_img
+    try:
+        if image_path.startswith("http"):
+            img = Image.open(io.BytesIO(requests.get(image_path).content))
+        else:
+            img = Image.open(image_path)
+        img = img.resize(initial_size)
+        answers = stability_api.upscale(
+            init_image=img, # Pass our image to the API and call the upscaling process.
+            # width=1024, # Optional parameter to specify the desired output width.
+        )
+        for resp in answers:
+            for artifact in resp.artifacts:
+                if artifact.finish_reason == generation.FILTER:
+                    warnings.warn(
+                        "Your request activated the API's safety filters and could not be processed."
+                        "Please submit a different image and try again.")
+                if artifact.type == generation.ARTIFACT_IMAGE:
+                    big_img = Image.open(io.BytesIO(artifact.binary))
+                    # big_img.save("samples/upscaled_image_x1.png")
+                    return big_img
+    except:
+        warnings.warn("No image artifact found in response. Returning None.")
 
 def upscale_pipeline(image_path, target_size_index=0):
     upscale_x1 = upscale_image(image_path, size_dict_x1[target_size_index])
