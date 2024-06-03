@@ -15,8 +15,8 @@ headers = {
 }
 
 image_ratio_dict = {
-    0: '--ar 13:30',
-    1: '--ar 5:6'
+    0: '--ar 30:13',
+    1: '--ar 6:5'
 }
 
 def send_request(method, path, body=None, headers={}):
